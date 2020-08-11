@@ -6,3 +6,4 @@ atomex.tz
 .pytest_cache
 __pycache__
 .python-version
+.vscode/

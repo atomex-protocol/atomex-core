@@ -28,7 +28,7 @@ before_script:
 
 script:
   - make
-#  - make test
+  - make test
 
 #deploy:
 #  provider: script

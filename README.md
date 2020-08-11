@@ -1,5 +1,5 @@
 # Atomex.tz
-[![Build Status](https://travis-ci.org/atomex-me/atomex-tzip-12-ligo.svg?branch=master)](https://travis-ci.org/atomex-me/atomex-tzip-12-ligo)
+[![Build Status](https://travis-ci.org/atomex-me/atomex-fa2-ligo.svg?branch=master)](https://travis-ci.org/atomex-me/atomex-fa2-ligo)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-green.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 Atomex protocol implementation for the Tezos Approvable Ledger (see [FA2 standard](https://gitlab.com/tzip/tzip/-/blob/master/proposals/tzip-12/tzip-12.md))
