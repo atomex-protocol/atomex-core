@@ -1,17 +1,13 @@
 type txParam is list (address * (nat * nat));
 type transferParam is list (address * txParam);
 
-type tokenLeg is record
-  tokenId: nat;
-  amount: nat;
-end
-
 type initiateParam is record
   hashedSecret: bytes;
   participant: address;
   refundTime: timestamp;
-  transferEntry: contract(transferParam);
-  legs: list (tokenLeg);
+  tokenAddress: address;
+  tokenId: nat;
+  totalAmount: nat;
 end
 
 type parameter is 
@@ -24,34 +20,33 @@ type swapState is record
   participant: address;
   refundTime: timestamp;
   tokenAddress: address;
-  legs: list (tokenLeg);
+  tokenId: nat;
+  totalAmount: nat;
 end
 
 type storage is big_map(bytes, swapState);
 
-function getSwapState(const hashedSecret: bytes; const s: storage) : swapState is
+[@inline] function getSwapState(const hashedSecret: bytes; const s: storage) : swapState is
   case s[hashedSecret] of
     | Some(state) -> state
     | None -> (failwith("no swap for such hash") : swapState)
-  end; attributes ["inline"];
+  end;
 
-function getTransferEntry(const tokenAddress: address) : contract(transferParam) is
-  case (Tezos.get_contract_opt(tokenAddress) : option(contract(transferParam))) of
+[@inline] function getTransferEntry(const tokenAddress: address) : contract(transferParam) is
+  case (Tezos.get_entrypoint_opt("%transfer", tokenAddress) : option(contract(transferParam))) of
     | Some(entry) -> entry
     | None -> (failwith("expected transfer entrypoint") : contract(transferParam))
-  end; attributes ["inline"];
+  end;
 
-function transfer(const transferEntry: contract(transferParam);
+[@inline] function transfer(const transferEntry: contract(transferParam); 
+                  const id: nat;
                   const src: address;
                   const dst: address; 
-                  const legs: list (tokenLeg)) : operation is
+                  const value: nat) : operation is
   block {
-    const dstBulk : list (address * (nat * nat)) = List.map (
-      function (const leg : tokenLeg) : (address * (nat * nat)) is (dst, (leg.tokenId, leg.amount)), 
-      legs);
-    const params: transferParam = list[(src, dstBulk)];
+    const params: transferParam = list[(src, list[(dst, (id, value))])];
     const op: operation = Tezos.transaction(params, 0tz, transferEntry);
-  } with op; attributes ["inline"];
+  } with op;
 
 function doInitiate(const initiate: initiateParam; var s: storage) : (list(operation) * storage) is 
   block {
@@ -65,17 +60,19 @@ function doInitiate(const initiate: initiateParam; var s: storage) : (list(opera
         initiator = Tezos.sender;
         participant = initiate.participant;
         refundTime = initiate.refundTime;
-        tokenAddress = Tezos.address(initiate.transferEntry);
-        legs = initiate.legs;
+        tokenAddress = initiate.tokenAddress;
+        tokenId = initiate.tokenId;
+        totalAmount = initiate.totalAmount;
       ];
 
     case s[initiate.hashedSecret] of
       | None -> s[initiate.hashedSecret] := state
-      | Some(x) -> failwith("swap for this hash is already initiated")
+      | _ -> failwith("swap for this hash is already initiated")
     end;
 
+    const transferEntry: contract(transferParam) = getTransferEntry(initiate.tokenAddress);
     const depositTx: operation = transfer(
-      initiate.transferEntry, Tezos.sender, Tezos.self_address, initiate.legs);
+      transferEntry, initiate.tokenId, Tezos.sender, Tezos.self_address, initiate.totalAmount);
   } with (list[depositTx], s)
 
 function doRedeem(const secret: bytes; var s: storage) : (list(operation) * storage) is
@@ -88,7 +85,7 @@ function doRedeem(const secret: bytes; var s: storage) : (list(operation) * stor
     remove hashedSecret from map s;
 
     const transferEntry: contract(transferParam) = getTransferEntry(swap.tokenAddress);
-    const redeemTx: operation = transfer(transferEntry, Tezos.self_address, swap.participant, swap.legs);
+    const redeemTx: operation = transfer(transferEntry, swap.tokenId, Tezos.self_address, swap.participant, swap.totalAmount);
   } with (list[redeemTx], s) 
 
 function doRefund(const hashedSecret: bytes; var s: storage) : (list(operation) * storage) is
@@ -99,7 +96,7 @@ function doRefund(const hashedSecret: bytes; var s: storage) : (list(operation) 
     remove hashedSecret from map s;
 
     const transferEntry: contract(transferParam) = getTransferEntry(swap.tokenAddress);
-    const refundTx: operation = transfer(transferEntry, Tezos.self_address, swap.initiator, swap.legs);
+    const refundTx: operation = transfer(transferEntry, swap.tokenId, Tezos.self_address, swap.initiator, swap.totalAmount);
   } with (list[refundTx], s) 
 
 function main (const p: parameter; var s: storage) : (list(operation) * storage) is

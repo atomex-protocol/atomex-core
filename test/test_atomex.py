@@ -3,8 +3,7 @@
 from os.path import dirname, join
 from unittest import TestCase
 
-from pytezos import ContractInterface, Contract, pytezos, format_timestamp
-from pytezos.repl.parser import MichelsonRuntimeError
+from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
 
 fa_address = 'KT1TjdF4H8H2qzxichtEbiCwHxCRM1SVx6B7'  # just some valid address
 source = 'tz1cShoBMAfpWX35DUcQRsXbqAgWAB4tz7kj'
@@ -13,6 +12,7 @@ party = 'tz1h3rQ8wBxFd8L9B3d7Jhaawu6Z568XU3xY'
 proxy = 'tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm'
 secret = 'dca15ce0c01f61ab03139b4673f4bd902203dc3b898a89a5d35bad794e5cfd4f'
 hashed_secret = '05bce5c12071fbca95b13d49cb5ef45323e0216d618bb4575c519b74be75e3da'
+hashed_secret_bytes = bytes.fromhex(hashed_secret)
 empty_storage = {}
 project_dir = dirname(dirname(__file__))
 
@@ -32,11 +32,11 @@ class AtomexContractTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.atomex = ContractInterface.create_from(join(project_dir, 'src/atomex.tz'))
-        cls.fa2 = Contract.from_michelson(fa2_meta)
+        cls.fa2 = ContractInterface.from_michelson(fa2_meta)
         cls.maxDiff = None
 
     def assertTransfer(self, parameters, from_, to_, txs):
-        params = self.fa2.parameter.decode(parameters)
+        params = self.fa2.parameter.decode(**parameters)
         self.assertEqual({'transfer': [{
             'from_': from_,
             'txs': [
@@ -51,8 +51,9 @@ class AtomexContractTest(TestCase):
                 .initiate(hashedSecret=hashed_secret,
                           participant=party,
                           refundTime=6 * 3600,
-                          transferEntry=f'{fa_address}%transfer',
-                          legs=[dict(tokenId=0, amount=1000)]) \
+                          tokenAddress=fa_address,
+                          tokenId=0,
+                          totalAmount=1000) \
                 .interpret(storage=empty_storage,
                            source=source,
                            amount=1000,
@@ -63,25 +64,24 @@ class AtomexContractTest(TestCase):
             .initiate(hashedSecret=hashed_secret,
                       participant=party,
                       refundTime=6 * 3600,
-                      transferEntry=f'{fa_address}%transfer',
-                      legs=[dict(tokenId=0, amount=1000)]) \
+                      tokenAddress=fa_address,
+                      tokenId=0,
+                      totalAmount=1000) \
             .interpret(storage=empty_storage,
                        source=source,
                        now=0)
 
-        big_map_diff = {
-            hashed_secret: {
+        res_storage = {
+            hashed_secret_bytes: {
                 'initiator': source,
                 'participant': party,
                 'refundTime': 6 * 3600,
-                'tokenAddress': f'{fa_address}%transfer',
-                'legs': [{
-                    'tokenId': 0,
-                    'amount': 1000
-                }]
+                'tokenAddress': fa_address,
+                'tokenId': 0,
+                'totalAmount': 1000
             }
         }
-        self.assertDictEqual(big_map_diff, res.big_map_diff)
+        self.assertDictEqual(res_storage, res.storage)
         self.assertEqual(1, len(res.operations))
         self.assertTransfer(
             parameters=res.operations[0]['parameters'],
@@ -94,26 +94,25 @@ class AtomexContractTest(TestCase):
             .initiate(hashedSecret=hashed_secret,
                       participant=party,
                       refundTime=6 * 3600,
-                      transferEntry=f'{fa_address}%transfer',
-                      legs=[dict(tokenId=0, amount=1000)]) \
+                      tokenAddress=fa_address,
+                      tokenId=0,
+                      totalAmount=1000) \
             .interpret(storage=empty_storage,
                        sender=proxy,
                        source=source,
                        now=0)
 
-        big_map_diff = {
-            hashed_secret: {
+        res_storage = {
+            hashed_secret_bytes: {
                 'initiator': proxy,
                 'participant': party,
                 'refundTime': 6 * 3600,
-                'tokenAddress': f'{fa_address}%transfer',
-                'legs': [{
-                    'tokenId': 0,
-                    'amount': 1000
-                }]
+                'tokenAddress': fa_address,
+                'tokenId': 0,
+                'totalAmount': 1000
             }
         }
-        self.assertDictEqual(big_map_diff, res.big_map_diff)
+        self.assertDictEqual(res_storage, res.storage)
         self.assertEqual(1, len(res.operations))
         self.assertTransfer(
             parameters=res.operations[0]['parameters'],
@@ -123,15 +122,13 @@ class AtomexContractTest(TestCase):
 
     def test_initiate_same_secret(self):
         initial_storage = {
-            hashed_secret: {
+            hashed_secret_bytes: {
                 'initiator': source,
                 'participant': party,
                 'refundTime': 6 * 3600,
-                'tokenAddress': f'{fa_address}%transfer',
-                'legs': [{
-                    'tokenId': 0,
-                    'amount': 1000
-                }]
+                'tokenAddress': fa_address,
+                'tokenId': 0,
+                'totalAmount': 1000
             }
         }
 
@@ -140,8 +137,9 @@ class AtomexContractTest(TestCase):
                 .initiate(hashedSecret=hashed_secret,
                           participant=party,
                           refundTime=6 * 3600,
-                          transferEntry=f'{fa_address}%transfer',
-                          legs=[dict(tokenId=0, amount=1000)]) \
+                          tokenAddress=fa_address,
+                          tokenId=0,
+                          totalAmount=1000) \
                 .interpret(storage=initial_storage,
                            source=source,
                            now=0)
@@ -153,8 +151,9 @@ class AtomexContractTest(TestCase):
                 .initiate(hashedSecret=hashed_secret,
                           participant=party,
                           refundTime=6 * 3600,
-                          transferEntry=f'{fa_address}%transfer',
-                          legs=[dict(tokenId=0, amount=1000)]) \
+                          tokenAddress=fa_address,
+                          tokenId=0,
+                          totalAmount=1000) \
                 .interpret(storage=empty_storage,
                            source=source,
                            now=now)
@@ -165,8 +164,9 @@ class AtomexContractTest(TestCase):
                 .initiate(hashedSecret=hashed_secret,
                           participant=party,
                           refundTime=6 * 3600,
-                          transferEntry=f'{fa_address}%transfer',
-                          legs=[dict(tokenId=0, amount=1000)]) \
+                          tokenAddress=fa_address,
+                          tokenId=0,
+                          totalAmount=1000) \
                 .interpret(storage=empty_storage,
                            sender=proxy,
                            source=party,
@@ -178,8 +178,9 @@ class AtomexContractTest(TestCase):
                 .initiate(hashedSecret=hashed_secret,
                           participant=party,
                           refundTime=6 * 3600,
-                          transferEntry=f'{fa_address}%transfer',
-                          legs=[dict(tokenId=0, amount=1000)]) \
+                          tokenAddress=fa_address,
+                          tokenId=0,
+                          totalAmount=1000) \
                 .interpret(storage=empty_storage,
                            sender=party,
                            source=source,
@@ -187,15 +188,13 @@ class AtomexContractTest(TestCase):
 
     def test_redeem_by_third_party(self):
         initial_storage = {
-            hashed_secret: {
+            hashed_secret_bytes: {
                 'initiator': source,
                 'participant': party,
                 'refundTime': 6 * 3600,
-                'tokenAddress': f'{fa_address}%transfer',
-                'legs': [{
-                    'tokenId': 0,
-                    'amount': 1000
-                }]
+                'tokenAddress': fa_address,
+                'tokenId': 0,
+                'totalAmount': 1000
             }
         }
 
@@ -205,7 +204,7 @@ class AtomexContractTest(TestCase):
                        source=source,
                        now=0)
 
-        self.assertDictEqual({hashed_secret: None}, res.big_map_diff)
+        self.assertDictEqual({hashed_secret_bytes: None}, res.storage)
         self.assertEqual(1, len(res.operations))
         self.assertTransfer(
             parameters=res.operations[0]['parameters'],
@@ -215,15 +214,13 @@ class AtomexContractTest(TestCase):
 
     def test_redeem_after_expiration(self):
         initial_storage = {
-            hashed_secret: {
+            hashed_secret_bytes: {
                 'initiator': source,
                 'participant': party,
                 'refundTime': 0,
-                'tokenAddress': f'{fa_address}%transfer',
-                'legs': [{
-                    'tokenId': 0,
-                    'amount': 1000
-                }]
+                'tokenAddress': fa_address,
+                'tokenId': 0,
+                'totalAmount': 1000
             }
         }
 
@@ -236,15 +233,13 @@ class AtomexContractTest(TestCase):
 
     def test_redeem_invalid_secret(self):
         initial_storage = {
-            hashed_secret: {
+            hashed_secret_bytes: {
                 'initiator': source,
                 'participant': party,
                 'refundTime': 60,
-                'tokenAddress': f'{fa_address}%transfer',
-                'legs': [{
-                    'tokenId': 0,
-                    'amount': 1000
-                }]
+                'tokenAddress': fa_address,
+                'tokenId': 0,
+                'totalAmount': 1000
             }
         }
 
@@ -257,15 +252,13 @@ class AtomexContractTest(TestCase):
 
     def test_redeem_with_money(self):
         initial_storage = {
-            hashed_secret: {
+            hashed_secret_bytes: {
                 'initiator': source,
                 'participant': party,
                 'refundTime': 60,
-                'tokenAddress': f'{fa_address}%transfer',
-                'legs': [{
-                    'tokenId': 0,
-                    'amount': 1000
-                }]
+                'tokenAddress': fa_address,
+                'tokenId': 0,
+                'totalAmount': 1000
             }
         }
 
@@ -279,15 +272,13 @@ class AtomexContractTest(TestCase):
 
     def test_refund(self):
         initial_storage = {
-            hashed_secret: {
+            hashed_secret_bytes: {
                 'initiator': source,
                 'participant': party,
                 'refundTime': 0,
-                'tokenAddress': f'{fa_address}%transfer',
-                'legs': [{
-                    'tokenId': 0,
-                    'amount': 1000
-                }]
+                'tokenAddress': fa_address,
+                'tokenId': 0,
+                'totalAmount': 1000
             }
         }
 
@@ -297,7 +288,7 @@ class AtomexContractTest(TestCase):
                        source=source,
                        now=60)
 
-        self.assertDictEqual({hashed_secret: None}, res.big_map_diff)
+        self.assertDictEqual({hashed_secret_bytes: None}, res.storage)
         self.assertEqual(1, len(res.operations))
         self.assertTransfer(
             parameters=res.operations[0]['parameters'],
@@ -307,15 +298,13 @@ class AtomexContractTest(TestCase):
 
     def test_third_party_refund(self):
         initial_storage = {
-            hashed_secret: {
+            hashed_secret_bytes: {
                 'initiator': source,
                 'participant': party,
                 'refundTime': 0,
-                'tokenAddress': f'{fa_address}%transfer',
-                'legs': [{
-                    'tokenId': 0,
-                    'amount': 1000
-                }]
+                'tokenAddress': fa_address,
+                'tokenId': 0,
+                'totalAmount': 1000
             }
         }
 
@@ -325,7 +314,7 @@ class AtomexContractTest(TestCase):
                        source=proxy,
                        now=60)
 
-        self.assertDictEqual({hashed_secret: None}, res.big_map_diff)
+        self.assertDictEqual({hashed_secret_bytes: None}, res.storage)
         self.assertEqual(1, len(res.operations))
         self.assertTransfer(
             parameters=res.operations[0]['parameters'],
@@ -335,15 +324,13 @@ class AtomexContractTest(TestCase):
 
     def test_refund_before_expiration(self):
         initial_storage = {
-            hashed_secret: {
+            hashed_secret_bytes: {
                 'initiator': source,
                 'participant': party,
                 'refundTime': 60,
-                'tokenAddress': f'{fa_address}%transfer',
-                'legs': [{
-                    'tokenId': 0,
-                    'amount': 1000
-                }]
+                'tokenAddress': fa_address,
+                'tokenId': 0,
+                'totalAmount': 1000
             }
         }
 
@@ -364,15 +351,13 @@ class AtomexContractTest(TestCase):
 
     def test_refund_with_money(self):
         initial_storage = {
-            hashed_secret: {
+            hashed_secret_bytes: {
                 'initiator': source,
                 'participant': party,
                 'refundTime': 0,
-                'tokenAddress': f'{fa_address}%transfer',
-                'legs': [{
-                    'tokenId': 0,
-                    'amount': 1000
-                }]
+                'tokenAddress': fa_address,
+                'tokenId': 0,
+                'totalAmount': 1000
             }
         }
 
