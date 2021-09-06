@@ -1,0 +1,42 @@
+{
+  "name": "atomex-core",
+  "version": "1.0.0",
+  "description": "Atomex smart contracts for Ethereum and Tezos",
+  "main": "truffle.js",
+  "scripts": {
+    "lint": "./node_modules/.bin/solium --no-soliumignore -d contracts",
+    "test": "./node_modules/.bin/truffle tests",
+    "deploy_ropsten": "./node_modules/.bin/truffle migrate --network ropsten",
+    "deploy_mainnet": "./node_modules/.bin/truffle migrate --network mainnet",
+    "verify_ropsten": "./node_modules/.bin/truffle run verify Atomex --network ropsten",
+    "verify_mainnet": "./node_modules/.bin/truffle run verify Atomex --network mainnet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atomex-protocol/atomex-core.git"
+  },
+  "keywords": [
+    "smart-contracts",
+    "dex",
+    "ethereum",
+    "solidity",
+    "atomic-swap"
+  ],
+  "author": "A1exCoon",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/atomex-protocol/atomex-core/issues"
+  },
+  "homepage": "https://bridge.atomex.me",
+  "dependencies": {
+    "dotenv": "^8.6.0",
+    "mocha": "^8.3.2",
+    "solium": "^1.2.5",
+    "truffle": "^5.3.4",
+    "truffle-privatekey-provider": "^1.5.0",
+    "web3": "^1.3.5"
+  },
+  "devDependencies": {
+    "truffle-plugin-verify": "^0.5.7"
+  }
+}
