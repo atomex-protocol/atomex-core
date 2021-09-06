@@ -1,8 +1,12 @@
+<<<<<<< HEAD
  
+=======
+>>>>>>> erc20-sol/master
 {
     "extends": "solium:recommended",
     "plugins": ["security"],
     "rules": {
+<<<<<<< HEAD
       "array-declarations": 2,
       "quotes": ["error","double"],
       "indentation": ["warning", 4],
@@ -11,3 +15,13 @@
       "security/no-block-members": "off"
     }
   }
+=======
+        "array-declarations": 2,
+        "quotes": ["error","double"],
+        "indentation": ["warning", 4],
+        "imports-on-top": 2,
+        "no-empty-blocks": "off",
+        "security/no-block-members": "off"
+    }
+}
+>>>>>>> erc20-sol/master
