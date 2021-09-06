@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "atomex-core"
+version = "0.1.0"
+description = ""
+authors = ["Michael Zaikin <mz@baking-bad.org>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+pytezos = "^3.2.11"
+pytest = "^6.2.5"
+chinstrap = "^0.0.14"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
