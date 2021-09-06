@@ -1,11 +1,11 @@
-<<<<<<< HEAD
 node_modules/
 build/
 .env
 *.output
-=======
-__pycache__/
-.pytest_cache/
-.idea/
+node_modules
+*.pp.ligo
+.idea
+.pytest_cache
+__pycache__
+.python-version
 .vscode/
->>>>>>> tez-tz/master

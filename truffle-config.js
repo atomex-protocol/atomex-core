@@ -17,11 +17,7 @@ module.exports = {
       network_id: "*" // Match any network id
     },
     "ropsten": {
-<<<<<<< HEAD
       provider: () => new PrivateKeyProvider(process.env.PRIVATE_KEY_ROPSTEN, `https://ropsten.infura.io/v3/${process.env.INFURA_TOKEN}`),  
-=======
-      provider: () => new PrivateKeyProvider(process.env.PRIVATE_KEY_ROPSTEN, `https://ropsten.infura.io/v3/${process.env.INFURA_TOKEN}`),
->>>>>>> erc20-sol/master
       network_id: 3,
       gas: 5500000,
       from: process.env.ADDRESS_ROPSTEN
