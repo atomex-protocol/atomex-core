@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "name": "atomex-core",
   "version": "1.0.0",
   "description": "Atomex smart contracts for Ethereum and Tezos",
@@ -7,18 +6,6 @@
   "scripts": {
     "lint": "./node_modules/.bin/solium --no-soliumignore -d contracts",
     "test": "./node_modules/.bin/truffle tests",
-=======
-  "name": "atomex-erc20-solidity-evm",
-  "version": "1.0.0",
-  "description": "Atomex protocol implementation for ERC20 in Solidity language (EVM)",
-  "main": "truffle.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "solium": "./node_modules/.bin/solium --no-soliumignore -d contracts",
-    "truffle": "./node_modules/.bin/truffle test",
->>>>>>> erc20-sol/master
     "deploy_ropsten": "./node_modules/.bin/truffle migrate --network ropsten",
     "deploy_mainnet": "./node_modules/.bin/truffle migrate --network mainnet",
     "verify_ropsten": "./node_modules/.bin/truffle run verify Atomex --network ropsten",
@@ -26,18 +13,13 @@
   },
   "repository": {
     "type": "git",
-<<<<<<< HEAD
     "url": "git+https://github.com/atomex-protocol/atomex-core.git"
-=======
-    "url": "git+https://github.com/atomex-me/atomex-erc20-solidity.git"
->>>>>>> erc20-sol/master
   },
   "keywords": [
     "smart-contracts",
     "dex",
     "ethereum",
     "solidity",
-<<<<<<< HEAD
     "atomic-swap"
   ],
   "author": "A1exCoon",
@@ -47,32 +29,14 @@
   },
   "homepage": "https://bridge.atomex.me",
   "dependencies": {
-=======
-    "atomic-swap",
-    "erc20"
-  ],
-  "author": "A1exCoon",
-  "license": "GPL-3.0",
-  "bugs": {
-    "url": "https://github.com/atomex-me/atomex-erc20-solidity/issues"
-  },
-  "homepage": "https://github.com/atomex-me/atomex-erc20-solidity#readme",
-  "dependencies": {
-    "web3": "^1.3.5",
->>>>>>> erc20-sol/master
     "dotenv": "^8.6.0",
     "mocha": "^8.3.2",
     "solium": "^1.2.5",
     "truffle": "^5.3.4",
-<<<<<<< HEAD
     "truffle-privatekey-provider": "^1.5.0",
     "web3": "^1.3.5"
   },
   "devDependencies": {
     "truffle-plugin-verify": "^0.5.7"
-=======
-    "truffle-plugin-verify": "^0.5.7",
-    "truffle-privatekey-provider": "^1.5.0"
->>>>>>> erc20-sol/master
   }
 }
