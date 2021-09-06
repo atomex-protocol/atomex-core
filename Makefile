@@ -1,9 +1,12 @@
+.PHONY: test
+
 install:
-	yarn
 	poetry install
 
 build:
-	for f in contracts/tezos/*.ligo; do docker run -v $(PWD):$(PWD) ligolang/ligo:0.16.1 compile-contract $(PWD)/$$f main > $(PWD)/$${f%.ligo}.tz; done
+	mkdir -p bin/tezos
+	mkdir -p bin/ethereum
+	for f in contracts/tezos/*.ligo; do docker run -v $(PWD):$(PWD) ligolang/ligo:0.24.0 compile-contract $(PWD)/$$f main > bin/tezos/$$(basename $${f%.ligo}).tz; done
 
 test:
 	pytest . -v

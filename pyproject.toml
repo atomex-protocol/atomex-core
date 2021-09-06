@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "atomex-core"
+name = "atomex-core-tezos"
 version = "0.1.0"
-description = ""
+description = "Atomex protocol implementation for Tezos"
 authors = ["Michael Zaikin <mz@baking-bad.org>"]
 license = "MIT"
 
@@ -11,7 +11,6 @@ python = "^3.9"
 [tool.poetry.dev-dependencies]
 pytezos = "^3.2.11"
 pytest = "^6.2.5"
-chinstrap = "^0.0.14"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

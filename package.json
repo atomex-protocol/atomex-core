@@ -1,11 +1,12 @@
 {
-  "name": "atomex-core",
+  "name": "atomex-core-ethereum",
   "version": "1.0.0",
-  "description": "Atomex smart contracts for Ethereum and Tezos",
+  "description": "Atomex protocol implementation for Ethereum",
   "main": "truffle.js",
   "scripts": {
     "lint": "./node_modules/.bin/solium --no-soliumignore -d contracts",
-    "test": "./node_modules/.bin/truffle tests",
+    "test": "./node_modules/.bin/truffle test",
+    "build": "./node_modules/.bin/truffle compile",
     "deploy_ropsten": "./node_modules/.bin/truffle migrate --network ropsten",
     "deploy_mainnet": "./node_modules/.bin/truffle migrate --network mainnet",
     "verify_ropsten": "./node_modules/.bin/truffle run verify Atomex --network ropsten",
@@ -37,6 +38,7 @@
     "web3": "^1.3.5"
   },
   "devDependencies": {
+    "@openzeppelin/contracts": "^4.3.1",
     "truffle-plugin-verify": "^0.5.7"
   }
 }
