@@ -1,0 +1,43 @@
+on:
+  push:
+name: tests
+jobs:
+  tezos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: install python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          architecture: 'x64'
+      - uses: snok/install-poetry@v1.1.1
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install libsodium-dev libsecp256k1-dev libgmp-dev -y
+      - name: install dependencies
+        run: poetry install
+      - name: install ligo
+        run: wget https://ligolang.org/bin/linux/ligo && chmod +x ./ligo && cp ./ligo /usr/local/bin
+      - name: build fa2 contract
+        run: ligo compile contract ./contracts/tezos/fa2_vault.ligo --output-file ./build/contracts/fa2_vault.tz -e main
+      - name: build fa1.2 contract
+        run: ligo compile contract ./contracts/tezos/fa12_vault.ligo --output-file ./build/contracts/fa12_vault.tz -e main
+      - name: build tez contract
+        run: cp ./contracts/tezos/tez_vault.tz ./build/contracts/
+      - name: tests
+        run: poetry run pytest . -v
+  ethereum:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: install node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - name: install dependencies
+        run: npm ci
+      - name: tests
+        run: npm run test
+          
