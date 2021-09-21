@@ -31,7 +31,7 @@ class AtomexContractTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.atomex = ContractInterface.create_from(join(project_dir, 'contracts/tezos/fa2_vault.tz'))
+        cls.atomex = ContractInterface.create_from(join(project_dir, 'build/contracts/fa2_vault.tz'))
         cls.fa2 = ContractInterface.from_michelson(fa2_meta)
         cls.maxDiff = None
 

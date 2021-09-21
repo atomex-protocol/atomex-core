@@ -3,7 +3,7 @@
 from os.path import dirname, join
 from unittest import TestCase
 
-from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
+from pytezos import ContractInterface, MichelsonRuntimeError
 
 fa_address = 'KT1TjdF4H8H2qzxichtEbiCwHxCRM1SVx6B7'  # just some valid address
 source = 'tz1cShoBMAfpWX35DUcQRsXbqAgWAB4tz7kj'
@@ -31,7 +31,7 @@ class AtomexContractTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.atomex = ContractInterface.create_from(join(project_dir, 'contracts/tezos/fa12_vault.tz'))
+        cls.atomex = ContractInterface.create_from(join(project_dir, 'build/contracts/fa12_vault.tz'))
         cls.fa2 = ContractInterface.from_michelson(fa2_meta)
         cls.maxDiff = None
 

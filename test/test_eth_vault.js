@@ -144,7 +144,7 @@ contract('AtomexEthVault', async (accounts) => {
             await contract.initiate(hashed_secret, recipient, refundTimestamp, countdown, payoff, active, {from: sender, value: value});
         }
         catch (error) {
-            assert(error.message.indexOf('SafeMath') >= 0, error.message);
+            assert(error.message.indexOf('revert') >= 0, error.message);
         }
 
         payoff = -1;
@@ -153,7 +153,7 @@ contract('AtomexEthVault', async (accounts) => {
             await contract.initiate(hashed_secret, recipient, refundTimestamp, countdown, payoff, active, {from: sender, value: value});
         }
         catch (error) {
-            assert(error.message.indexOf('SafeMath') >= 0, error.message);
+            assert(error.message.indexOf('value out-of-bounds') >= 0, error.message);
         }
     });
 
@@ -181,7 +181,7 @@ contract('AtomexEthVault', async (accounts) => {
             await contract.initiate(hashed_secret, recipient, refundTimestamp, countdown, payoff, active, {from: sender, value: value});
         }
         catch (error) {
-            assert(error.message.indexOf('countdown exceeds the refundTimestamp') >= 0, error.message);
+            assert(error.message.indexOf('value out-of-bounds') >= 0, error.message);
         }
     });
 
@@ -488,7 +488,7 @@ contract('AtomexEthVault', async (accounts) => {
             await contract.redeem(hashed_secret, secret, {from: recipient, value: 0});
         }
         catch (error) {
-            assert(error.message.indexOf('secret is not correct') >= 0);
+            assert(error.message.indexOf('secret is not correct') >= 0, error.message);
         }
     });
 
@@ -511,7 +511,7 @@ contract('AtomexEthVault', async (accounts) => {
             await contract.redeem(hashed_secret, secret, {from: recipient, value: 0});
         }
         catch (error) {
-            assert(error.message.indexOf('invalid bytes32 value') >= 0, error.message);
+            assert(error.message.indexOf('incorrect data length') >= 0, error.message);
         }
 
         secret = '0x11111111111111111111111111111111111111111111111111111111111111';

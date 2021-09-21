@@ -1,9 +1,11 @@
-import sys
 from os.path import dirname, join
 from unittest import TestCase
 from decimal import Decimal
 
-from pytezos import ContractInterface, pytezos, format_timestamp, MichelsonRuntimeError, TezArithmeticError
+from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
+from pytezos.michelson.format import format_timestamp
+from pytezos.rpc.errors import TezArithmeticError
+
 
 source = 'tz1irF8HUsQp2dLhKNMhteG1qALNU9g3pfdN'
 party = 'tz1h3rQ8wBxFd8L9B3d7Jhaawu6Z568XU3xY'
@@ -18,7 +20,7 @@ class AtomexContractTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.atomex = ContractInterface.create_from(join(project_dir, 'contracts/tezos/tez_vault.tz'))
+        cls.atomex = ContractInterface.from_file(join(project_dir, 'build/contracts/tez_vault.tz'))
         cls.maxDiff = None
 
     def test_initiate(self):
@@ -30,7 +32,7 @@ class AtomexContractTest(TestCase):
                       refund_time=now + 6 * 3600,
                       payoff=Decimal('0.02')) \
             .with_amount(Decimal('1')) \
-            .result(storage=empty_storage,
+            .interpret(storage=empty_storage,
                     source=source)
 
         big_map_diff = {
@@ -54,7 +56,7 @@ class AtomexContractTest(TestCase):
                       refund_time=now + 6 * 3600,
                       payoff=Decimal('0.02')) \
             .with_amount(Decimal('1')) \
-            .result(storage=empty_storage,
+            .interpret(storage=empty_storage,
                     sender=proxy,
                     source=source)
 
@@ -89,7 +91,7 @@ class AtomexContractTest(TestCase):
                           refund_time=now + 6 * 3600,
                           payoff=Decimal('0.02')) \
                 .with_amount(Decimal('1')) \
-                .result(storage=initial_storage,
+                .interpret(storage=initial_storage,
                         source=source)
 
     def test_initiate_payoff_overflow(self):
@@ -102,7 +104,7 @@ class AtomexContractTest(TestCase):
                           refund_time=now + 6 * 3600,
                           payoff=Decimal('1.1')) \
                 .with_amount(Decimal('1')) \
-                .result(storage=empty_storage,
+                .interpret(storage=empty_storage,
                         source=source)
 
     def test_initiate_in_the_past(self):
@@ -115,7 +117,7 @@ class AtomexContractTest(TestCase):
                           refund_time=now - 6 * 3600,
                           payoff=Decimal('0.01')) \
                 .with_amount(Decimal('1')) \
-                .result(storage=empty_storage,
+                .interpret(storage=empty_storage,
                         source=source)
 
     def test_initiate_same_party(self):
@@ -128,7 +130,7 @@ class AtomexContractTest(TestCase):
                           refund_time=now - 6 * 3600,
                           payoff=Decimal('0.01')) \
                 .with_amount(Decimal('1')) \
-                .result(storage=empty_storage,
+                .interpret(storage=empty_storage,
                         source=party)
 
     def test_add_non_existent(self):
@@ -136,7 +138,7 @@ class AtomexContractTest(TestCase):
             self.atomex \
                 .add(hashed_secret) \
                 .with_amount(Decimal('1')) \
-                .result(storage=empty_storage)
+                .interpret(storage=empty_storage)
 
     def test_add_another_address(self):
         now = pytezos.now()
@@ -153,7 +155,7 @@ class AtomexContractTest(TestCase):
         res = self.atomex \
             .add(hashed_secret) \
             .with_amount(Decimal('1')) \
-            .result(storage=initial_storage, source=party)
+            .interpret(storage=initial_storage, source=party)
 
         big_map_diff = initial_storage[0]
         big_map_diff[hashed_secret]['amount'] = Decimal('1.98')
@@ -175,7 +177,7 @@ class AtomexContractTest(TestCase):
             self.atomex \
                 .add(hashed_secret) \
                 .with_amount(Decimal('1')) \
-                .result(storage=initial_storage, source=source)
+                .interpret(storage=initial_storage, source=source)
 
     def test_redeem_by_third_party(self):
         now = pytezos.now()
@@ -191,7 +193,7 @@ class AtomexContractTest(TestCase):
 
         res = self.atomex \
             .redeem(secret) \
-            .result(storage=initial_storage, source=source)
+            .interpret(storage=initial_storage, source=source)
 
         self.assertDictEqual({hashed_secret: None}, res.big_map_diff)
         self.assertEqual(2, len(res.operations))
@@ -219,7 +221,7 @@ class AtomexContractTest(TestCase):
         with self.assertRaises(MichelsonRuntimeError):
             self.atomex \
                 .redeem(secret) \
-                .result(storage=initial_storage, source=party)
+                .interpret(storage=initial_storage, source=party)
 
     def test_redeem_invalid_secret(self):
         now = pytezos.now()
@@ -236,7 +238,7 @@ class AtomexContractTest(TestCase):
         with self.assertRaises(MichelsonRuntimeError):
             self.atomex \
                 .redeem('a' * 32) \
-                .result(storage=initial_storage, source=source)
+                .interpret(storage=initial_storage, source=source)
 
     def test_redeem_with_money(self):
         now = pytezos.now()
@@ -254,7 +256,7 @@ class AtomexContractTest(TestCase):
             self.atomex \
                 .redeem(secret) \
                 .with_amount(Decimal('1')) \
-                .result(storage=initial_storage, source=source)
+                .interpret(storage=initial_storage, source=source)
 
     def test_refund(self):
         now = pytezos.now()
@@ -270,7 +272,7 @@ class AtomexContractTest(TestCase):
 
         res = self.atomex \
             .refund(hashed_secret) \
-            .result(storage=initial_storage, source=source)
+            .interpret(storage=initial_storage, source=source)
 
         self.assertDictEqual({hashed_secret: None}, res.big_map_diff)
         self.assertEqual(1, len(res.operations))
@@ -294,13 +296,13 @@ class AtomexContractTest(TestCase):
         with self.assertRaises(MichelsonRuntimeError):
             self.atomex \
                 .refund(hashed_secret) \
-                .result(storage=initial_storage, source=source)
+                .interpret(storage=initial_storage, source=source)
 
     def test_refund_non_existent(self):
         with self.assertRaises(MichelsonRuntimeError):
             self.atomex \
                 .refund(hashed_secret) \
-                .result(storage=empty_storage, source=source)
+                .interpret(storage=empty_storage, source=source)
 
     def test_refund_with_money(self):
         now = pytezos.now()
@@ -318,7 +320,7 @@ class AtomexContractTest(TestCase):
             self.atomex \
                 .refund(hashed_secret) \
                 .with_amount(Decimal('1')) \
-                .result(storage=initial_storage, source=source)
+                .interpret(storage=initial_storage, source=source)
 
     def test_refund_by_third_party(self):
         now = pytezos.now()
@@ -334,7 +336,7 @@ class AtomexContractTest(TestCase):
 
         res = self.atomex \
             .refund(hashed_secret) \
-            .result(storage=initial_storage, source=party)
+            .interpret(storage=initial_storage, source=party)
 
         self.assertDictEqual({hashed_secret: None}, res.big_map_diff)
         self.assertEqual(1, len(res.operations))

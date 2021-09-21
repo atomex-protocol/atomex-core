@@ -180,7 +180,7 @@ contract('AtomexErc20Vault', async (accounts) => {
             await contractSwap.initiate(hashed_secret, contractUSDC.address, participant, refundTimestamp, countdown, value, payoff, active, {from: sender, value: 0});
         }
         catch (error) {
-            assert(error.message.indexOf('invalid number value') >= 0, error.message);
+            assert(error.message.indexOf('overflow') >= 0, error.message);
         }
     });
 
@@ -201,7 +201,7 @@ contract('AtomexErc20Vault', async (accounts) => {
             await contractSwap.initiate(hashed_secret, contractUSDC.address, participant, refundTimestamp, countdown, value, payoff, active, {from: sender, value: 0});
         }
         catch (error) {
-            assert(error.message.indexOf('SafeMath: subtraction overflow') >= 0, error.message);
+            assert(error.message.indexOf('revert') >= 0, error.message);
         }
 
         payoff = -1;
@@ -210,7 +210,7 @@ contract('AtomexErc20Vault', async (accounts) => {
             await contractSwap.initiate(hashed_secret, contractUSDC.address, participant, refundTimestamp, countdown, value, payoff, active, {from: sender, value: 0});
         }
         catch (error) {
-            assert(error.message.indexOf('SafeMath: subtraction overflow') >= 0, error.message);
+            assert(error.message.indexOf('value out-of-bounds') >= 0, error.message);
         }
     });
 
@@ -240,7 +240,7 @@ contract('AtomexErc20Vault', async (accounts) => {
             await contractSwap.initiate(hashed_secret, contractUSDC.address, participant, refundTimestamp, countdown, value, payoff, active, {from: sender, value: 0});
         }
         catch (error) {
-            assert(error.message.indexOf('countdown exceeds the refundTimestamp') >= 0, error.message);
+            assert(error.message.indexOf('value out-of-bounds') >= 0, error.message);
         }
     });
 
@@ -580,7 +580,7 @@ contract('AtomexErc20Vault', async (accounts) => {
             await contractSwap.redeem(hashed_secret, secret, {from: redeemer, value: 0});
         }
         catch (error) {
-            assert(error.message.indexOf('invalid bytes32 value') >= 0, error.message);
+            assert(error.message.indexOf('incorrect data length') >= 0, error.message);
         }
 
         secret = '0x11111111111111111111111111111111111111111111111111111111111111';
