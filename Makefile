@@ -1,4 +1,7 @@
-.PHONY: test build
+-include .env
+export $(shell sed 's/=.*//' .env)
+
+.PHONY: test build deploy_tezos
 
 install:
 	poetry install
@@ -10,3 +13,6 @@ build:
 
 test:
 	pytest . -v
+
+deploy_tezos:
+	python ./migrations/4_deploy_tz.py -p ${TEZOS_PRIVATE} -n https://rpc.tzkt.io/mainnet
