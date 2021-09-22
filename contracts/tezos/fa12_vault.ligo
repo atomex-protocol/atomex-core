@@ -1,17 +1,22 @@
-type txParam is list (address * (nat * nat));
-type transferParam is list (address * txParam);
+type transferParam is address * (address * nat);
 
 type initiateParam is record
   hashedSecret: bytes;
   participant: address;
   refundTime: timestamp;
   tokenAddress: address;
-  tokenId: nat;
   totalAmount: nat;
+  payoffAmount: nat;
+end
+
+type addParam is record
+  hashedSecret: bytes;
+  addAmount: nat;
 end
 
 type parameter is 
   | Initiate of initiateParam
+  | Add of addParam
   | Redeem of bytes
   | Refund of bytes
 
@@ -20,8 +25,8 @@ type swapState is record
   participant: address;
   refundTime: timestamp;
   tokenAddress: address;
-  tokenId: nat;
   totalAmount: nat;
+  payoffAmount: nat;
 end
 
 type storage is big_map(bytes, swapState);
@@ -39,17 +44,25 @@ type storage is big_map(bytes, swapState);
   end;
 
 [@inline] function transfer(const transferEntry: contract(transferParam); 
-                  const id: nat;
                   const src: address;
                   const dst: address; 
                   const value: nat) : operation is
   block {
-    const params: transferParam = list[(src, list[(dst, (id, value))])];
+    const params: transferParam = (src, (dst, value));
     const op: operation = Tezos.transaction(params, 0tz, transferEntry);
   } with op;
 
+[@inline] function thirdPartyRedeem(const transferEntry: contract(transferParam); const payoffAmount: nat) : list(operation) is
+  block {
+    const hasPayoff: bool = payoffAmount > 0n;
+  } with case hasPayoff of
+    | True -> list[transfer(transferEntry, Tezos.self_address, Tezos.sender, payoffAmount)]
+    | False -> (nil : list(operation))
+  end;
+
 function doInitiate(const initiate: initiateParam; var s: storage) : (list(operation) * storage) is 
   block {
+    if (initiate.payoffAmount > initiate.totalAmount) then failwith("payoff amount exceeds the total"); else skip;
     if (initiate.refundTime <= now) then failwith("refund time has already come"); else skip;
     if (32n =/= Bytes.length(initiate.hashedSecret)) then failwith("hash size doesn't equal 32 bytes"); else skip;
     if (Tezos.source = initiate.participant) then failwith("SOURCE cannot act as participant"); else skip;
@@ -61,8 +74,8 @@ function doInitiate(const initiate: initiateParam; var s: storage) : (list(opera
         participant = initiate.participant;
         refundTime = initiate.refundTime;
         tokenAddress = initiate.tokenAddress;
-        tokenId = initiate.tokenId;
         totalAmount = initiate.totalAmount;
+        payoffAmount = initiate.payoffAmount;
       ];
 
     case s[initiate.hashedSecret] of
@@ -70,10 +83,21 @@ function doInitiate(const initiate: initiateParam; var s: storage) : (list(opera
       | _ -> failwith("swap for this hash is already initiated")
     end;
 
-    const transferEntry: contract(transferParam) = getTransferEntry(initiate.tokenAddress);
+	const transferEntry: contract(transferParam) = getTransferEntry(initiate.tokenAddress);
     const depositTx: operation = transfer(
-      transferEntry, initiate.tokenId, Tezos.sender, Tezos.self_address, initiate.totalAmount);
+      transferEntry, Tezos.sender, Tezos.self_address, initiate.totalAmount);
   } with (list[depositTx], s)
+
+function doAdd(const add: addParam; var s: storage) : (list(operation) * storage) is 
+  block {
+    const swap: swapState = getSwapState(add.hashedSecret, s);
+    if (now >= swap.refundTime) then failwith("refund time has already come"); else skip;
+
+    s[add.hashedSecret] := swap with record [ totalAmount = swap.totalAmount + add.addAmount ];
+   
+    const transferEntry: contract(transferParam) = getTransferEntry(swap.tokenAddress);
+    const addTx: operation = transfer(transferEntry, Tezos.sender, Tezos.self_address, add.addAmount);
+  } with (list[addTx], s)
 
 function doRedeem(const secret: bytes; var s: storage) : (list(operation) * storage) is
   block {
@@ -85,8 +109,10 @@ function doRedeem(const secret: bytes; var s: storage) : (list(operation) * stor
     remove hashedSecret from map s;
 
     const transferEntry: contract(transferParam) = getTransferEntry(swap.tokenAddress);
-    const redeemTx: operation = transfer(transferEntry, swap.tokenId, Tezos.self_address, swap.participant, swap.totalAmount);
-  } with (list[redeemTx], s) 
+    const redeemAmount: nat = abs(swap.totalAmount - swap.payoffAmount);  // we ensure that on init
+    const redeemTx: operation = transfer(transferEntry, Tezos.self_address, swap.participant, redeemAmount);
+    const opList: list(operation) = thirdPartyRedeem(transferEntry, swap.payoffAmount);
+  } with (redeemTx # opList, s) 
 
 function doRefund(const hashedSecret: bytes; var s: storage) : (list(operation) * storage) is
   block {
@@ -96,7 +122,7 @@ function doRefund(const hashedSecret: bytes; var s: storage) : (list(operation) 
     remove hashedSecret from map s;
 
     const transferEntry: contract(transferParam) = getTransferEntry(swap.tokenAddress);
-    const refundTx: operation = transfer(transferEntry, swap.tokenId, Tezos.self_address, swap.initiator, swap.totalAmount);
+    const refundTx: operation = transfer(transferEntry, Tezos.self_address, swap.initiator, swap.totalAmount);
   } with (list[refundTx], s) 
 
 function main (const p: parameter; var s: storage) : (list(operation) * storage) is
@@ -104,6 +130,7 @@ block {
   if 0tz =/= Tezos.amount then failwith("this contract does not accept tez"); else skip;
 } with case p of
   | Initiate(initiate) -> (doInitiate(initiate, s))
+  | Add(add) -> (doAdd(add, s))
   | Redeem(redeem) -> (doRedeem(redeem, s))
   | Refund(refund) -> (doRefund(refund, s))
 end
