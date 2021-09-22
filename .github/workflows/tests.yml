@@ -20,6 +20,8 @@ jobs:
         run: poetry install
       - name: install ligo
         run: wget https://ligolang.org/bin/linux/ligo && chmod +x ./ligo && cp ./ligo /usr/local/bin
+      - name: prepare build folder
+        run: mkdir -p build/contracts
       - name: build fa2 contract
         run: ligo compile contract ./contracts/tezos/fa2_vault.ligo --output-file ./build/contracts/fa2_vault.tz -e main
       - name: build fa1.2 contract
